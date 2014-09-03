@@ -2,9 +2,10 @@ const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/Services.jsm");
 
-var name = Services.strings.createBundle("chrome://browser/locale/browser.properties").GetStringFromName("contextmenu.openInNewTab");
+var label = Services.strings.createBundle("chrome://browser/locale/browser.properties").GetStringFromName("contextmenu.openInNewTab");
 
 function loadIntoWindow(window) {
+
   function newCallback(aTarget) {
     let url = window.NativeWindow.contextmenus._getLinkURL(aTarget);
     window.BrowserApp.addTab(url, { selected: true, parentId: window.BrowserApp.selectedTab.id });
@@ -13,12 +14,14 @@ function loadIntoWindow(window) {
   let items = window.NativeWindow.contextmenus.items;
   for (let itemId of Object.keys(items)) {
     let item = items[itemId];
-    if (item.name === name) {
+    if (item.args.label === label) {
       // XXX: item.callback is undefined here, so saving the original callback isn't working :(
       item.callback = newCallback;
-      break;
+      return;
     }
   }
+
+  Cu.reportError("Couldn't find 'Open in New Tab' context menu item!");
 }
 
 function unloadFromWindow(window) {
